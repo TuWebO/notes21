@@ -1,0 +1,7 @@
+music21>=8.0.0
+numpy
+scipy
+pytest
+
+# Visualization
+matplotlib
