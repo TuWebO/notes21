@@ -11,7 +11,7 @@ class TestGridEncoder(unittest.TestCase):
             Note("C"), Note("D"), Note("E"), Note("F"), 
             Note("G"), Note("A"), Note("B")
         ]
-        grid = encoder.encode(notes)
+        grid = encoder.encode_harmonic(notes)
         
         # In Key of C, all these are natural (0 relative accidental).
         # Col 0 -> Flat (-1 relative)
@@ -36,7 +36,7 @@ class TestGridEncoder(unittest.TestCase):
             Note("G"), Note("A"), Note("B"), Note("C"), 
             Note("D"), Note("E"), Note("F#")
         ]
-        grid = encoder.encode(notes)
+        grid = encoder.encode_harmonic(notes)
         
         # In Key of G:
         # G is natural -> relative 0
@@ -65,7 +65,7 @@ class TestGridEncoder(unittest.TestCase):
         # F# in C: accidental=+1. KeyShift(F in C)=0. Rel = +1 - 0 = +1.
         # Should be in Column 2 (Right).
         notes = [Note("F#")]
-        grid = encoder.encode(notes)
+        grid = encoder.encode_harmonic(notes)
         
         self.assertEqual(grid[3, 2], 1)
         self.assertEqual(grid[3, 1], 0)
@@ -78,7 +78,7 @@ class TestGridEncoder(unittest.TestCase):
         # Bb accidental=-1. KeyShift(B in C)=0. Rel = -1.
         # Should be in Column 0 (Left).
         notes = [Note("Bb")]
-        grid = encoder.encode(notes)
+        grid = encoder.encode_harmonic(notes)
         
         self.assertEqual(grid[6, 0], 1)
 
@@ -91,7 +91,7 @@ class TestGridEncoder(unittest.TestCase):
         # Should be in Column 0 (Left).
         encoder = GridEncoder("G")
         notes = [Note("F")]  # Natural F
-        grid = encoder.encode(notes)
+        grid = encoder.encode_harmonic(notes)
         
         self.assertEqual(grid[3, 0], 1) # F is index 3
 
@@ -100,7 +100,7 @@ class TestGridEncoder(unittest.TestCase):
         encoder = GridEncoder("C")
         # Two C4s and one C5. All map to C, rel 0.
         notes = [Note("C", 4), Note("C", 5), Note("C", 4)]
-        grid = encoder.encode(notes)
+        grid = encoder.encode_harmonic(notes)
         
         self.assertEqual(grid[0, 1], 3) # C is index 0
 
@@ -116,8 +116,79 @@ class TestGridEncoder(unittest.TestCase):
         # KeyShift E in F# = +1.
         # Rel = 1 - 1 = 0.
         notes = [Note("E#")]
-        grid = encoder.encode(notes)
+        grid = encoder.encode_harmonic(notes)
         self.assertEqual(grid[2, 1], 1)
+
+    def test_encode_alias_compatibility(self):
+        """Test that .encode() still works as alias for harmonic encoding."""
+        encoder = GridEncoder("C")
+        notes = [Note("C")]
+        grid = encoder.encode(notes)
+        self.assertEqual(grid[0, 1], 1)
+
+    def test_register_encoding_shape(self):
+        """Test the shape of the 3D register encoding."""
+        encoder = GridEncoder("C")
+        notes = [Note("C", 4)]
+        # Default range (2, 6) -> 2, 3, 4, 5, 6 (5 octaves)
+        # Shape should be (5, 7, 3)
+        grid = encoder.encode_register(notes, octave_range=(2, 6))
+        self.assertEqual(grid.shape, (5, 7, 3))
+
+    def test_register_encoding_mapping(self):
+        """Test specific mapping in 3D register encoding."""
+        encoder = GridEncoder("C")
+        # C4 -> Octave 4. Range (2, 6).
+        # Index = 4 - 2 = 2.
+        # C in C Major -> Row 0, Col 1 (Natural).
+        notes = [Note("C", 4)]
+        grid = encoder.encode_register(notes, octave_range=(2, 6))
+        
+        self.assertEqual(grid[2, 0, 1], 1)
+        self.assertEqual(np.sum(grid), 1)
+
+    def test_register_encoding_out_of_range(self):
+        """Test that notes outside the octave range are ignored."""
+        encoder = GridEncoder("C")
+        # C1 (below 2), C7 (above 6)
+        notes = [Note("C", 1), Note("C", 7), Note("C", 4)]
+        grid = encoder.encode_register(notes, octave_range=(2, 6))
+        
+        # Only C4 should be encoded (at index 2)
+        self.assertEqual(grid[2, 0, 1], 1)
+        self.assertEqual(np.sum(grid), 1)
+
+    def test_register_encoding_multiple_octaves(self):
+        """Test notes in different octaves."""
+        encoder = GridEncoder("C")
+        # C3, C4, C5
+        notes = [Note("C", 3), Note("C", 4), Note("C", 5)]
+        grid = encoder.encode_register(notes, octave_range=(2, 6))
+        
+        # C3 -> 3-2=1
+        # C4 -> 4-2=2
+        # C5 -> 5-2=3
+        self.assertEqual(grid[1, 0, 1], 1)
+        self.assertEqual(grid[2, 0, 1], 1)
+        self.assertEqual(grid[3, 0, 1], 1)
+        self.assertEqual(np.sum(grid), 3)
+    
+    def test_register_equals_harmonic_projection(self):
+        """Summing the 3D grid across octaves must equal the 2D grid."""
+        encoder = GridEncoder("C")
+        notes = [
+            Note("C", 3),
+            Note("C", 4),
+            Note("F#", 4),
+            Note("Bb", 5),
+        ]
+    
+        harmonic = encoder.encode_harmonic(notes)
+        register = encoder.encode_register(notes, octave_range=(2,6))
+    
+        projected = np.sum(register, axis=0)
+    
+        self.assertTrue(np.array_equal(harmonic, projected))
 
 if __name__ == "__main__":
     unittest.main()

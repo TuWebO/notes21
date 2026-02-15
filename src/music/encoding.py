@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List
+from typing import List, Tuple
 from .core import Note, KEY_SHIFTS
 
 class GridEncoder:
@@ -12,9 +12,27 @@ class GridEncoder:
             raise ValueError(f"Unknown key: {key}. Available keys: {list(KEY_SHIFTS.keys())}")
         self.key = key
 
-    def encode(self, notes: List[Note]) -> np.ndarray:
+    def _map_note_to_grid(self, note: Note) -> Tuple[int, int, int]:
         """
-        Returns a 7x3 matrix representation of the notes.
+        Helper to map a note to grid coordinates (row, col, octave).
+        
+        Returns:
+            row: 0-6 (diatonic index)
+            col: 0-2 (relative accidental column index)
+            octave: integer octave
+        """
+        row, rel_acc, octave = note.to_grid(self.key)
+        # Map relative accidental (-1, 0, 1) to column index (0, 1, 2)
+        col = rel_acc + 1
+        if not (0 <= col <= 2):
+            raise ValueError(
+                f"Relative accidental {rel_acc} out of supported range [-1, 0, +1]"
+            )
+        return row, col, octave
+
+    def encode_harmonic(self, notes: List[Note]) -> np.ndarray:
+        """
+        Returns a 7x3 matrix representation of the notes (2D Harmonic Representation).
         
         The grid dimensions corresponding to:
         - Rows (0-6): Diatonic scale degrees (C, D, E, F, G, A, B)
@@ -37,20 +55,48 @@ class GridEncoder:
         grid = np.zeros((7, 3), dtype=int)
 
         for note in notes:
-            row, rel_acc, _ = note.to_grid(self.key)
-            # Map relative accidental (-1, 0, 1) to column index (0, 1, 2)
-            col = rel_acc + 1
-            
-            # Identify valid column range [0, 2]
-            # This handles cases where relative accidental might be out of
-            # the standard -1/0/+1 range (e.g. double sharps in some keys),
-            # though standard theory usage within this system aims to keep it within.
-            # We strictly clip or ignore? 
-            # For now, let's only count if it fits the 3-slot window.
-            if 0 <= col <= 2:
-                grid[row, col] += 1
-            # else:
-            #     # Optionally log or handle out-of-bounds accidentals if we want strictness.
-            #     pass
+            row, col, _ = self._map_note_to_grid(note)
+            grid[row, col] += 1
 
+        return grid
+
+    def encode(self, notes: List[Note]) -> np.ndarray:
+        """
+        Alias for encode_harmonic for backward compatibility.
+        """
+        return self.encode_harmonic(notes)
+
+    def encode_register(self, notes: List[Note], octave_range: Tuple[int, int]) -> np.ndarray:
+        """
+        Returns a (D, 7, 3) tensor representation of the notes (3D Register-Aware Representation).
+        
+        Dimensions:
+        - Depth (D): Octaves (from min_octave to max_octave inclusive)
+        - Rows (7): Diatonic scale degrees
+        - Columns (3): Relative accidentals
+        
+        Args:
+            notes: List of Note objects.
+            octave_range: Tuple (min_octave, max_octave).
+            
+        Returns:
+            np.ndarray: shape (D, 7, 3)
+        """
+        min_oct, max_oct = octave_range
+
+        if min_oct > max_oct:
+            raise ValueError("min_octave must be <= max_octave")
+        num_octaves = max_oct - min_oct + 1
+        
+        # Shape: (Octaves, 7 diatonic, 3 accidentals)
+        grid = np.zeros((num_octaves, 7, 3), dtype=int)
+        
+        for note in notes:
+            row, col, oct_val = self._map_note_to_grid(note)
+            
+            # Check if note is within the requested octave range
+            if min_oct <= oct_val <= max_oct:
+                oct_idx = oct_val - min_oct
+                grid[oct_idx, row, col] += 1
+                
         return grid
