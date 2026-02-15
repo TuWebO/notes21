@@ -1,10 +1,15 @@
 from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
+from notes21 import __version__
 from notes21.music.core import Note
 from notes21.music.encoding import GridEncoder
 from notes21.music.visualization import format_note_grid
 
 app = FastAPI()
+
+@app.get("/version")
+def version():
+    return {"version": __version__}
 
 
 @app.get("/", response_class=HTMLResponse)

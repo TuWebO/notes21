@@ -15,3 +15,8 @@ def test_grid_endpoint():
     # harmonic grid: row 0 (C), column 1 (natural)
     grid = data["grid"]
     assert grid[0][1] == 1
+
+def test_version_endpoint():
+    response = client.get("/version")
+    assert response.status_code == 200
+    assert "version" in response.json()
