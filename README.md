@@ -1,5 +1,8 @@
 # 21notes
 
+[![CI](https://github.com/TuWebO/notes21/actions/workflows/ci.yml/badge.svg)](https://github.com/TuWebO/notes21/actions)
+
+
 A tonal computation engine based on a structured **7×3 grid representation** of music.
 
 21notes provides:
