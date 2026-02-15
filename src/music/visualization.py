@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple
 try:
     from mpl_toolkits.mplot3d import Axes3D
     import matplotlib.pyplot as plt
+    from matplotlib import animation
     import numpy as np
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
@@ -245,5 +246,98 @@ def plot_note_grid_3d(notes: List[Note], key: str = "C",
     else:
         ax.set_title(f"3D Tonal Grid (Key: {key})")
 
-    plt.tight_layout()
+    fig.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
     return fig
+
+def animate_tonal_trajectory(
+    notes: List[Note],
+    key: str = "C",
+    octave_range: Optional[Tuple[int, int]] = None,
+    interval: int = 600,
+    title: Optional[str] = None
+):
+    """
+    Animate notes as a trajectory through 3D tonal space.
+
+    Shows sequential motion in:
+        X → Relative accidental
+        Y → Diatonic index
+        Z → Octave
+
+    Args:
+        notes: Ordered list of Note objects
+        key: Key signature
+        octave_range: Optional (min_oct, max_oct)
+        interval: Time between frames (ms)
+        title: Optional plot title
+
+    Returns:
+        matplotlib.animation.FuncAnimation
+    """
+
+    if not MATPLOTLIB_AVAILABLE:
+        print("Matplotlib not available.")
+        return None
+
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection="3d")
+
+    xs, ys, zs = [], [], []
+
+    for note in notes:
+        row, rel_acc, octave = note.to_grid(key)
+
+        if rel_acc not in [-1, 0, 1]:
+            raise ValueError(
+                f"Relative accidental {rel_acc} out of supported range [-1, 0, +1]"
+            )
+
+        if octave_range is not None:
+            min_oct, max_oct = octave_range
+            if not (min_oct <= octave <= max_oct):
+                continue
+
+        xs.append(rel_acc)
+        ys.append(row)
+        zs.append(octave)
+
+    line, = ax.plot([], [], [], lw=2)
+    points = ax.scatter([], [], [], s=80)
+
+    ax.set_xlabel("Relative Accidental")
+    ax.set_ylabel("Diatonic Degree")
+    ax.set_zlabel("Octave")
+
+    ax.set_xticks([-1, 0, 1])
+    ax.set_xticklabels(["Flat (-1)", "Natural (0)", "Sharp (+1)"])
+
+    ax.set_yticks(range(7))
+    ax.set_yticklabels(NOTE_NAMES)
+
+    if octave_range is not None:
+        ax.set_zlim(min_oct - 0.5, max_oct + 0.5)
+
+    ax.set_xlim(-1.5, 1.5)
+    ax.set_ylim(-0.5, 6.5)
+
+    if title:
+        ax.set_title(title)
+    else:
+        ax.set_title("Animated Tonal Trajectory")
+
+    def update(frame):
+        line.set_data(xs[:frame], ys[:frame])
+        line.set_3d_properties(zs[:frame])
+        points._offsets3d = (xs[:frame], ys[:frame], zs[:frame])
+        return line, points
+
+    ani = animation.FuncAnimation(
+        fig,
+        update,
+        frames=len(xs) + 1,
+        interval=interval,
+        blit=False,
+        repeat=False
+    )
+
+    return ani
