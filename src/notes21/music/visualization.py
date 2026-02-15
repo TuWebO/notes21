@@ -377,4 +377,6 @@ def animate_tonal_trajectory(
         repeat=False
     )
 
+    plt.close(fig)
+
     return ani
