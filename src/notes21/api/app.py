@@ -1,11 +1,47 @@
 from fastapi import FastAPI, HTTPException, Request, Query
-from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
 from notes21.music.core import Note
 from notes21.music.encoding import GridEncoder
 from notes21.music.visualization import format_note_grid
 
 app = FastAPI()
 
+
+@app.get("/", response_class=HTMLResponse)
+def homepage():
+    return """
+    <html>
+        <head>
+            <title>21notes Tonal Grid</title>
+        </head>
+        <body>
+            <h1>21notes — 7×3 Tonal Grid</h1>
+
+            <form action="/grid" method="get">
+                <label>Note:</label>
+                <input type="text" name="note" value="C" required><br><br>
+
+                <label>Octave:</label>
+                <input type="number" name="octave" value="4"><br><br>
+
+                <label>Key:</label>
+                <input type="text" name="key" value="C"><br><br>
+
+                <label>Output format:</label>
+                <select name="format">
+                    <option value="json">JSON</option>
+                    <option value="text">Plain Text</option>
+                </select><br><br>
+
+                <button type="submit">Compute Grid</button>
+            </form>
+
+            <p>
+                API Docs: <a href="/docs">/docs</a>
+            </p>
+        </body>
+    </html>
+    """
 
 @app.get(
     "/grid",
