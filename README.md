@@ -55,12 +55,17 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install dependencies:
+Install the project (runtime dependencies included):
 
 ```bash
-pip install -r requirements.txt
 pip install -e .
 ```
+
+Install development dependencies:
+
+```bash
+pip install -e .[dev]
+``` 
 
 ---
 
@@ -69,7 +74,7 @@ pip install -e .
 Start the FastAPI server:
 
 ```bash
-PYTHONPATH=src uvicorn notes21.api.app:app --reload
+uvicorn notes21.api.app:app
 ```
 
 Then open:
