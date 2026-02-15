@@ -96,7 +96,7 @@ def homepage():
     <div class="container">
         <h1>21notes — 7×3 Tonal Grid</h1>
 
-        <form action="/grid" method="get">
+        <form action="/grid/view" method="get">
 
             <label for="note">Note</label>
             <input type="text" id="note" name="note" value="C" required>
@@ -106,12 +106,6 @@ def homepage():
 
             <label for="key">Key</label>
             <input type="text" id="key" name="key" value="C">
-
-            <label for="format">Output Format</label>
-            <select id="format" name="format">
-                <option value="json">JSON</option>
-                <option value="text">Text Grid</option>
-            </select>
 
             <button type="submit">Compute Grid</button>
         </form>
@@ -146,12 +140,19 @@ OR
 async def get_grid(
     request: Request,
     note: str = Query(..., description="Musical note (e.g., C, F#, Bb, Cx or C##)"),
-    octave: int = Query(4, description="Octave number"),
+    octave: str | None = Query("4", description="Octave number"),
     key: str = Query("C", description="Key signature"),
     format: str = Query(None, description="Optional format override: json or text")
 ):
     try:
-        n = Note(note, octave)
+        # ---- Normalize octave ----
+        if octave is None or octave.strip() == "":
+            octave_int = 4
+        else:
+            octave_int = int(octave)
+
+        # ---- Core logic ----
+        n = Note(note, octave_int)
         encoder = GridEncoder(key)
         grid = encoder.encode_harmonic([n])
 
@@ -164,7 +165,7 @@ async def get_grid(
         if format == "json":
             return JSONResponse({
                 "note": note,
-                "octave": octave,
+                "octave": octave_int,
                 "key": key,
                 "grid": grid.tolist()
             })
@@ -178,10 +179,236 @@ async def get_grid(
         # Default → JSON
         return {
             "note": note,
-            "octave": octave,
+            "octave": octave_int,
             "key": key,
             "grid": grid.tolist()
         }
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/grid/view", response_class=HTMLResponse)
+def grid_view(
+    note: str,
+    octave: str | None = "4",
+    key: str = "C"
+):
+    # Normalize octave
+    if octave is None or octave.strip() == "":
+        octave = 4
+    else:
+        octave = int(octave)
+
+    try:
+        n = Note(note, octave)
+        encoder = GridEncoder(key)
+        grid = encoder.encode_harmonic([n])
+
+        grid_text = format_note_grid([n], key=key)
+
+        return f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>21notes Result</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f6f8;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }}
+        h1 {{
+            text-align: center;
+        }}
+        pre {{
+            background: #f7f7f7;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }}
+        .btn {{
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 18px;
+            background: #2f80ed;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }}
+        .btn:hover {{
+            background: #1c60c7;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>7×3 Tonal Grid</h1>
+        <pre>{grid_text}</pre>
+        <a href="/" class="btn">← Back</a>
+    </div>
+</body>
+</html>
+"""
+    except ValueError as e:
+        return render_error_html(str(e))
+
+    # Friendly messages
+    if "Unknown key" in error_message:
+        title = "Invalid Key"
+    elif "Invalid note base name" in error_message:
+        title = "Invalid Note"
+    else:
+        title = "Invalid Input"
+
+    from notes21.music.core import KEY_SHIFTS
+    available_keys = ", ".join(KEY_SHIFTS.keys())
+
+    return HTMLResponse(
+        content=f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>21notes Error</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f6f8;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            text-align: center;
+        }}
+        h1 {{
+            color: #d32f2f;
+        }}
+        p {{
+            font-size: 16px;
+            margin: 15px 0;
+        }}
+        .keys {{
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+        }}
+        .btn {{
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 18px;
+            background: #2f80ed;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }}
+        .btn:hover {{
+            background: #1c60c7;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{title}</h1>
+        <p>{error_message}</p>
+        <div class="keys">
+            Supported keys: {available_keys}
+        </div>
+        <a href="/" class="btn">← Back</a>
+    </div>
+</body>
+</html>
+""",
+        status_code=400
+    )
+
+
+def render_error_html(message: str):
+    from notes21.music.core import KEY_SHIFTS
+
+    if "Unknown key" in message:
+        title = "Invalid Key"
+    elif "Invalid note base name" in message:
+        title = "Invalid Note"
+    elif "Octave" in message:
+        title = "Invalid Octave"
+    else:
+        title = "Invalid Input"
+
+    available_keys = ", ".join(KEY_SHIFTS.keys())
+
+    return HTMLResponse(
+        content=f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>21notes Error</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f6f8;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            text-align: center;
+        }}
+        h1 {{
+            color: #d32f2f;
+        }}
+        p {{
+            font-size: 16px;
+            margin: 15px 0;
+        }}
+        .keys {{
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+        }}
+        .btn {{
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 18px;
+            background: #2f80ed;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }}
+        .btn:hover {{
+            background: #1c60c7;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{title}</h1>
+        <p>{message}</p>
+        <div class="keys">
+            Supported keys: {available_keys}
+        </div>
+        <a href="/" class="btn">← Back</a>
+    </div>
+</body>
+</html>
+""",
+        status_code=400
+    )
