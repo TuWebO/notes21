@@ -1,11 +1,14 @@
-# 21notes
+# notes21
 
 [![CI](https://github.com/TuWebO/notes21/actions/workflows/ci.yml/badge.svg)](https://github.com/TuWebO/notes21/actions)
 
 
+🌐 **Live API:** https://notes21.onrender.com/  
+📘 **Swagger Docs:** https://notes21.onrender.com/docs  
+
 A tonal computation engine based on a structured **7×3 grid representation** of music.
 
-21notes provides:
+notes21 provides:
 
 - A formal note abstraction (`Note`)
 - Key-aware grid projection

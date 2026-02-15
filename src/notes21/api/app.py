@@ -18,7 +18,7 @@ def homepage():
 <!DOCTYPE html>
 <html>
 <head>
-    <title>21notes Tonal Grid</title>
+    <title>notes21 Tonal Grid</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
@@ -94,7 +94,7 @@ def homepage():
 
 <body>
     <div class="container">
-        <h1>21notes — 7×3 Tonal Grid</h1>
+        <h1>notes21 — 7×3 Tonal Grid</h1>
 
         <form action="/grid/view" method="get">
 
@@ -210,7 +210,7 @@ def grid_view(
 <!DOCTYPE html>
 <html>
 <head>
-    <title>21notes Result</title>
+    <title>notes21 Result</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {{
@@ -277,7 +277,7 @@ def grid_view(
 <!DOCTYPE html>
 <html>
 <head>
-    <title>21notes Error</title>
+    <title>notes21 Error</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {{
@@ -355,7 +355,7 @@ def render_error_html(message: str):
 <!DOCTYPE html>
 <html>
 <head>
-    <title>21notes Error</title>
+    <title>notes21 Error</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {{
