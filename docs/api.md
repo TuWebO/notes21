@@ -7,7 +7,7 @@ The project includes a lightweight FastAPI service to compute and retrieve 7×3 
 You can run the API server using `uvicorn` from the project root:
 
 ```bash
-uvicorn src.api.app:app --reload
+uvicorn notes21.api.app:app
 ```
 
 The server will typically start at `http://127.0.0.1:8000`.
