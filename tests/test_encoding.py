@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from src.music.core import Note
-from src.music.encoding import GridEncoder
+from notes21.music.core import Note
+from notes21.music.encoding import GridEncoder
 
 class TestGridEncoder(unittest.TestCase):
     def test_c_major_scale_in_c(self):

@@ -4,7 +4,7 @@ import os
 # Add src to path to import music.core
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from music.core import Note, KEY_SHIFTS
+from notes21.music.core import Note, KEY_SHIFTS
 
 def test_note_creation():
     print("Testing Note Creation...")

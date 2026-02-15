@@ -1,5 +1,5 @@
-from music.core import Note
-from music.visualization import format_note_grid
+from notes21.music.core import Note
+from notes21.music.visualization import format_note_grid
 
 
 def test_format_note_grid_basic():

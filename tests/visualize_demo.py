@@ -11,8 +11,8 @@ except ImportError:
     MATPLOTLIB_AVAILABLE = False
     print("Matplotlib not available. Demo will use text output.")
 
-from music.core import Note, KEY_SHIFTS
-from music.visualization import plot_note_grid
+from notes21.music.core import Note, KEY_SHIFTS
+from notes21.music.visualization import plot_note_grid
 
 def main():
     print("Generating demo visualization...")

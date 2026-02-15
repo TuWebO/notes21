@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import PlainTextResponse, JSONResponse
-from music.core import Note
-from music.encoding import GridEncoder
-from music.visualization import format_note_grid
+from notes21.music.core import Note
+from notes21.music.encoding import GridEncoder
+from notes21.music.visualization import format_note_grid
 
 app = FastAPI()
 
