@@ -130,6 +130,43 @@ def plot_note_grid(notes: List[Note], key: str = "C", title: Optional[str] = Non
     
     return fig
 
+def format_note_grid(notes: List[Note], key: str = "C", title: Optional[str] = None) -> str:
+    """
+    Returns a text-based 7x3 grid representation of notes as a string.
+    """
+
+    lines = []
+
+    if title:
+        lines.append(f"\n--- {title} ---")
+    else:
+        lines.append(f"\n--- 7x3 Music Grid (Key: {key}) ---")
+
+    grid = [[[] for _ in range(3)] for _ in range(7)]
+
+    for note in notes:
+        row, rel_acc, octave = note.to_grid(key)
+        col_idx = rel_acc + 1
+        if 0 <= col_idx <= 2:
+            grid[row][col_idx].append(f"{note.original_name}{note.octave}")
+
+    lines.append("-" * 65)
+    lines.append(f"{'Row':<4} | {'Flat (-1)':<18} | {'Natural (0)':<18} | {'Sharp (+1)':<18}")
+    lines.append("-" * 65)
+
+    for i in range(6, -1, -1):
+        row_name = NOTE_NAMES[i]
+        flat_notes = ", ".join(grid[i][0])
+        nat_notes = ", ".join(grid[i][1])
+        sharp_notes = ", ".join(grid[i][2])
+        lines.append(
+            f"{row_name:<4} | {flat_notes:<18} | {nat_notes:<18} | {sharp_notes:<18}"
+        )
+
+    lines.append("-" * 65)
+
+    return "\n".join(lines) + "\n"
+
 def plot_note_grid_3d(notes: List[Note], key: str = "C",
                       octave_range: Optional[Tuple[int, int]] = None,
                       title: Optional[str] = None):

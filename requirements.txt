@@ -5,3 +5,7 @@ pytest
 
 # Visualization
 matplotlib
+
+# API
+fastapi
+uvicorn
