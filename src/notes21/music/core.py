@@ -86,6 +86,8 @@ class Note:
                     acc_val -= 1
                 elif char == 'x': # double sharp
                     acc_val += 2
+                else:
+                    raise ValueError(f"Invalid accidental symbol: {char} in note name {name}")
         
         return diatonic_index, acc_val
 
