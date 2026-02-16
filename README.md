@@ -52,7 +52,7 @@ src/notes21/
 
 ---
 
-## ⚙️ Setup
+## ⚙️ Setup (local environment)
 
 Create and activate a virtual environment:
 
@@ -70,7 +70,7 @@ pip install -e .
 Install development dependencies:
 
 ```bash
-pip install -e .[dev]
+pip install -e ".[dev]"
 ``` 
 
 ---
@@ -80,7 +80,7 @@ pip install -e .[dev]
 Start the FastAPI server:
 
 ```bash
-uvicorn notes21.api.app:app
+uvicorn notes21.api.app:app --reload
 ```
 
 Then open:
