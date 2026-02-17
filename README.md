@@ -6,6 +6,10 @@
 🌐 **Live API:** https://notes21.onrender.com/  
 📘 **Swagger Docs:** https://notes21.onrender.com/docs  
 
+## 🐍 Python Version
+
+notes21 requires **Python 3.13 or newer**.
+
 A tonal computation engine based on a structured **7×3 grid representation** of music.
 
 notes21 provides:
@@ -54,24 +58,31 @@ src/notes21/
 
 ## ⚙️ Setup (local environment)
 
+This project uses **uv** for dependency management and commits a `uv.lock`
+file to ensure deterministic builds across local, CI, and production.
+
+Install uv (macOS example):
+
+```bash
+brew install uv
+```
+
+For Linux, Windows, and other installation methods, see the official uv installation guide:
+
+https://docs.astral.sh/uv/getting-started/installation/
+
 Create and activate a virtual environment:
 
 ```bash
-python3 -m venv .venv
+uv venv
 source .venv/bin/activate
 ```
 
-Install the project (runtime dependencies included):
+Install dependencies (including development dependencies):
 
 ```bash
-pip install -e .
+uv sync --extra dev
 ```
-
-Install development dependencies:
-
-```bash
-pip install -e ".[dev]"
-``` 
 
 ---
 
@@ -114,7 +125,7 @@ curl "http://127.0.0.1:8000/grid?note=Db&key=C&format=text"
 Run the test suite:
 
 ```bash
-pytest
+uv run pytest
 ```
 
 ---
